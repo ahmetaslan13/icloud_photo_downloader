@@ -1,0 +1,34 @@
+# Default configuration for iCloud Photo Downloader
+
+# Download settings
+download:
+  default_path: "~/Pictures/iCloud_Photos"  # Default download location
+  required_space_gb: 10  # Minimum required free space in GB
+  create_timestamp_folder: true  # Create timestamped folder for each download
+  skip_existing: true  # Skip existing files with same name and size
+
+# File organization
+organization:
+  by_date: true  # Organize by year/month
+  by_type: true  # Separate by file type
+  month_format: "%02d-%B"  # Month folder format (e.g., "01-January")
+
+# Download options
+options:
+  download_shared: true  # Download photos shared with you
+  download_albums: true  # Download shared albums
+  preserve_metadata: true  # Preserve EXIF and other metadata
+  handle_live_photos: true  # Download live photo video components
+
+# Performance
+performance:
+  max_retries: 3  # Number of retry attempts for failed downloads
+  retry_delay: 5  # Delay between retries in seconds
+  max_concurrent_downloads: 4  # Maximum number of concurrent downloads
+
+# Logging
+logging:
+  level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  log_to_file: true  # Enable logging to file
+  log_file: "download.log"  # Log file name
+  console_level: "INFO"  # Console output logging level
