@@ -5,6 +5,8 @@ import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 from tqdm import tqdm
+import hashlib
+import tempfile
 
 from .auth import ICloudAuth
 from .config import Config
@@ -196,12 +198,50 @@ class PhotoDownloader:
                 filename = f"{date_str}_{filename}"
             
             filepath = os.path.join(photo_dir, filename)
-            
-            # Download the photo
-            download = photo.download()
-            with open(filepath, 'wb') as f:
-                f.write(download.raw.read())
-            
+
+            # --- Content-based deduplication logic ---
+            if not hasattr(self, '_photo_hashes'):
+                self._photo_hashes = set()
+                # Optionally, load from a persistent file here
+
+            def compute_sha256(file_path):
+                hasher = hashlib.sha256()
+                with open(file_path, 'rb') as f:
+                    while True:
+                        chunk = f.read(8192)
+                        if not chunk:
+                            break
+                        hasher.update(chunk)
+                return hasher.hexdigest()
+
+            # Download to a temporary file first
+            with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                download = photo.download()
+                tmp_file.write(download.raw.read())
+                tmp_file_path = tmp_file.name
+
+            photo_hash = compute_sha256(tmp_file_path)
+            if photo_hash in self._photo_hashes:
+                logger.info(f"Duplicate photo detected by hash, skipping: {filepath}")
+                os.remove(tmp_file_path)
+                return False
+            else:
+                self._photo_hashes.add(photo_hash)
+                # Move temp file to final location
+                os.makedirs(photo_dir, exist_ok=True)
+                if not os.path.exists(filepath):
+                    os.rename(tmp_file_path, filepath)
+                else:
+                    # If file exists, add a suffix
+                    base, ext = os.path.splitext(filepath)
+                    i = 1
+                    new_filepath = f"{base}_{i}{ext}"
+                    while os.path.exists(new_filepath):
+                        i += 1
+                        new_filepath = f"{base}_{i}{ext}"
+                    os.rename(tmp_file_path, new_filepath)
+                    filepath = new_filepath
+
             # Handle metadata
             if self.config.get('options.preserve_metadata'):
                 self.metadata.preserve_timestamps(filepath, created_date)

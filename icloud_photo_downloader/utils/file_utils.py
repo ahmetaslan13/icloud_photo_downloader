@@ -38,16 +38,14 @@ def check_disk_space(directory: str, required_space_gb: float = 10.0) -> Optiona
         logger.error(f"Error checking disk space: {str(e)}")
         return None
 
-def create_directory_structure(base_dir: str, file_type: str, 
-                             year: int, month: int) -> str:
-    """Create nested directories for organizing photos.
+def create_directory_structure(base_dir: str, file_type: str, year: int) -> str:
+    """Create nested directories for organizing photos by type and year only.
     
     Args:
         base_dir: Base directory path
         file_type: Type of media (HEIC, JPEG, etc.)
         year: Year for organization
-        month: Month for organization
-        
+    
     Returns:
         str: Path to created directory
     """
@@ -55,19 +53,11 @@ def create_directory_structure(base_dir: str, file_type: str,
         # Create type directory
         type_dir = os.path.join(base_dir, file_type)
         os.makedirs(type_dir, exist_ok=True)
-        
         # Create year directory
         year_dir = os.path.join(type_dir, str(year))
         os.makedirs(year_dir, exist_ok=True)
-        
-        # Create month directory with number and name (e.g., "01-January")
-        month_name = calendar.month_name[month]
-        month_dir = os.path.join(year_dir, f"{month:02d}-{month_name}")
-        os.makedirs(month_dir, exist_ok=True)
-        
-        logger.debug(f"Created directory structure: {month_dir}")
-        return month_dir
-        
+        logger.debug(f"Created directory structure: {year_dir}")
+        return year_dir
     except Exception as e:
         logger.error(f"Error creating directory structure: {str(e)}")
         raise
